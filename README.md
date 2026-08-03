@@ -38,8 +38,8 @@ Chaque table (`Game`) oppose un à plusieurs joueurs (sièges/`Participation`) a
 ### Lancer l'infrastructure complète
 
 ```bash
-git clone <url-du-dépôt>
-cd new-agent-Air-LLm
+git clone https://github.com/aminekaoutar/jeu-cartes.git
+cd jeu-cartes
 cp .env.example .env        # puis éditez SECRET_KEY / POSTGRES_PASSWORD
 docker compose up --build
 ```
