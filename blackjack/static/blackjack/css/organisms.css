@@ -1,0 +1,113 @@
+/* Organisms — composed sections built from molecules + atoms. */
+
+.game-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: radial-gradient(ellipse at top, var(--color-felt-500), var(--color-felt-900) 70%);
+  box-shadow: var(--shadow-raised);
+  border: 6px solid var(--color-felt-700);
+}
+
+.game-table__dealer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.game-table__seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+}
+
+.game-table__status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}
+
+.scoreboard__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.scoreboard__stat-value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-gold-400);
+}
+
+.scoreboard__stat-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.game-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar__brand {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-gold-400);
+  text-decoration: none;
+}
+
+.navbar__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.navbar__links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.navbar__links a:hover {
+  color: var(--color-text-primary);
+}

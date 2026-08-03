@@ -1,0 +1,112 @@
+{% extends "blackjack/base.html" %}
+{% load static %}
+{% block title %}Table {{ game.code }} — Blackjack{% endblock %}
+{% block content %}
+<div data-game-table
+     data-game-code="{{ game.code }}"
+     data-status="{{ state.status }}"
+     data-action-url="{% url 'blackjack:game_action' game.code %}"
+     data-state-url="{% url 'blackjack:game_state' game.code %}">
+  {% csrf_token %}
+
+  <div class="game-table__status">
+    <h1>Table {{ game.code }}</h1>
+    <span class="badge" data-game-status>{{ state.status_label }}</span>
+  </div>
+
+  <div data-error-box class="badge badge--lose" hidden></div>
+
+  <div class="game-table">
+    <div class="game-table__dealer">
+      <span class="text-muted">Croupier</span>
+      <div class="player-hand__cards" data-dealer-hand>
+        {% for card in state.dealer.cards %}
+          {% if card.hidden %}
+            <div class="card-unit card-unit--hidden"></div>
+          {% else %}
+            <div class="card-unit card-unit--{{ card.color }}">
+              <span class="card-unit__rank">{{ card.rank }}</span>
+              <span class="card-unit__suit card-unit__suit--{{ card.color }}">{{ card.symbol }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <span class="player-hand__total" data-dealer-total>{{ state.dealer.total|default:"?" }}</span>
+    </div>
+
+    <div class="game-table__seats">
+      {% for player in state.players %}
+        <div class="seat {% if player.is_turn %}seat--active-turn{% endif %} {% if player.is_you %}seat--you{% endif %}" data-seat="{{ player.seat }}">
+          <div class="seat__header">
+            <strong>{{ player.username }}</strong>
+            {% if player.is_you %}<span class="badge">vous</span>{% endif %}
+            <span class="badge" data-status-badge>
+              {% if player.result != "PENDING" %}{{ player.result_label }}{% else %}{{ player.status_label }}{% endif %}
+            </span>
+          </div>
+          <div class="player-hand">
+            <div class="player-hand__cards" data-hand>
+              {% for card in player.hand %}
+                <div class="card-unit card-unit--{{ card.color }}">
+                  <span class="card-unit__rank">{{ card.rank }}</span>
+                  <span class="card-unit__suit card-unit__suit--{{ card.color }}">{{ card.symbol }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <span class="player-hand__total" data-total>{{ player.total|default:"0" }}</span>
+          </div>
+          <span class="chip">{{ player.bet }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if state.status == "EN_COURS" %}
+    <div class="action-zone" data-action-zone>
+      {% if not state.your_turn %}
+        <span class="action-zone__hint">En attente de votre tour…</span>
+      {% endif %}
+      <button class="btn btn--primary" data-action="hit" {% if not state.your_turn %}disabled{% endif %}>Tirer</button>
+      <button class="btn btn--ghost" data-action="stand" {% if not state.your_turn %}disabled{% endif %}>Rester</button>
+      <button class="btn btn--danger" data-action="double" {% if not state.your_turn %}disabled{% endif %}>Doubler</button>
+    </div>
+  {% endif %}
+
+  {% if state.status == "TERMINEE" %}
+    <div class="card stack" data-round-over>
+      <h2>Manche terminée</h2>
+      <a class="btn btn--primary" href="{% url 'blackjack:lobby' %}">Retour au lobby</a>
+    </div>
+  {% endif %}
+
+  {% if state.status == "EN_ATTENTE" %}
+    <div class="card stack">
+      <h2>En attente de joueurs ({{ state.players|length }}/{{ game.max_players }})</h2>
+      {% if not state.you_are_seated %}
+        <form method="post" action="{% url 'blackjack:game_join' game.code %}" class="row">
+          {% csrf_token %}
+          <div class="form-field" style="margin-bottom:0">
+            <input type="number" name="bet" value="10" min="1" style="width:6rem">
+          </div>
+          <button class="btn btn--primary" type="submit">Rejoindre la table</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'blackjack:game_leave' game.code %}">
+          {% csrf_token %}
+          <button class="btn btn--ghost" type="submit">Quitter la table</button>
+        </form>
+      {% endif %}
+      {% if state.can_start %}
+        <form method="post" action="{% url 'blackjack:game_start' game.code %}">
+          {% csrf_token %}
+          <button class="btn btn--primary" type="submit">Démarrer la partie</button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'blackjack/js/table.js' %}" defer></script>
+{% endblock %}

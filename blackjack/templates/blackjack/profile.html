@@ -1,0 +1,51 @@
+{% extends "blackjack/base.html" %}
+{% block title %}Profil — Blackjack{% endblock %}
+{% block content %}
+<h1>{{ profile.user.username }}</h1>
+
+<div class="scoreboard">
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.chips }}</span>
+    <span class="scoreboard__stat-label">Jetons</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.games_played }}</span>
+    <span class="scoreboard__stat-label">Parties jouées</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.games_won }}</span>
+    <span class="scoreboard__stat-label">Victoires</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.games_lost }}</span>
+    <span class="scoreboard__stat-label">Défaites</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.games_pushed }}</span>
+    <span class="scoreboard__stat-label">Égalités</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.win_rate }}%</span>
+    <span class="scoreboard__stat-label">Taux de victoire</span>
+  </div>
+</div>
+
+<div class="card stack">
+  <h2>Historique récent</h2>
+  {% if recent_games %}
+    <div class="game-list">
+      {% for game in recent_games %}
+        <div class="game-list__row">
+          <div>
+            <strong>Table {{ game.code }}</strong>
+            <span class="badge">{{ game.get_status_display }}</span>
+          </div>
+          <a class="btn btn--ghost" href="{% url 'blackjack:table' game.code %}">Voir</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Aucune partie jouée pour le moment.</p>
+  {% endif %}
+</div>
+{% endblock %}

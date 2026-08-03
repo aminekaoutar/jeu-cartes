@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Blackjack{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'blackjack/css/app.css' %}">
+</head>
+<body>
+  <nav class="navbar">
+    <a class="navbar__brand" href="{% url 'blackjack:lobby' %}">&#9824; Blackjack</a>
+    <div class="navbar__links">
+      {% if user.is_authenticated %}
+        <span class="chip">{{ user.profile.chips }}</span>
+        <a href="{% url 'blackjack:profile' %}">{{ user.username }}</a>
+        <form method="post" action="{% url 'blackjack:logout' %}" style="display:inline">
+          {% csrf_token %}
+          <button class="btn btn--ghost" type="submit">Déconnexion</button>
+        </form>
+      {% else %}
+        <a href="{% url 'blackjack:login' %}">Connexion</a>
+        <a href="{% url 'blackjack:signup' %}">Inscription</a>
+      {% endif %}
+    </div>
+  </nav>
+  <main>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

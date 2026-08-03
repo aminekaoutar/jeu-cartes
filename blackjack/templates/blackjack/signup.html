@@ -1,0 +1,21 @@
+{% extends "blackjack/base.html" %}
+{% block title %}Inscription — Blackjack{% endblock %}
+{% block content %}
+<div class="card stack" style="max-width: 26rem; margin: 0 auto;">
+  <h1>Créer un compte</h1>
+  <p class="text-muted">Vous démarrez avec 1000 jetons.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+        {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">S'inscrire</button>
+  </form>
+  <p class="text-muted">Déjà un compte ? <a href="{% url 'blackjack:login' %}">Connexion</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+@import url("tokens.css");
+@import url("atoms.css");
+@import url("molecules.css");
+@import url("organisms.css");
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-felt-900);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+
+a {
+  color: var(--color-gold-400);
+}
+
+.messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.messages li {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  border-left: 3px solid var(--color-gold-500);
+  font-size: var(--text-sm);
+}
+
+.messages li.error {
+  border-left-color: var(--color-danger);
+}
+
+.messages li.success {
+  border-left-color: var(--color-success);
+}
+
+.card {
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

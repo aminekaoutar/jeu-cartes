@@ -1,0 +1,78 @@
+{% extends "blackjack/base.html" %}
+{% block title %}Lobby — Blackjack{% endblock %}
+{% block content %}
+<div class="scoreboard">
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.chips }}</span>
+    <span class="scoreboard__stat-label">Jetons</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.games_played }}</span>
+    <span class="scoreboard__stat-label">Parties jouées</span>
+  </div>
+  <div class="scoreboard__stat">
+    <span class="scoreboard__stat-value">{{ profile.win_rate }}%</span>
+    <span class="scoreboard__stat-label">Taux de victoire</span>
+  </div>
+</div>
+
+<div class="card stack">
+  <h2>Créer une table</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">Créer &amp; s'asseoir</button>
+  </form>
+</div>
+
+<div class="card stack">
+  <h2>Tables en attente</h2>
+  {% if open_games %}
+    <div class="game-list">
+      {% for game in open_games %}
+        <div class="game-list__row">
+          <div>
+            <strong>Table {{ game.code }}</strong>
+            <div class="text-muted">Hôte : {{ game.host.username }} · {{ game.participations.count }}/{{ game.max_players }} joueurs</div>
+          </div>
+          <form method="post" action="{% url 'blackjack:game_join' game.code %}" class="row">
+            {% csrf_token %}
+            <div class="form-field" style="margin-bottom:0">
+              <input type="number" name="bet" value="10" min="1" style="width:5rem">
+            </div>
+            <button class="btn btn--primary" type="submit">Rejoindre</button>
+          </form>
+          <a class="btn btn--ghost" href="{% url 'blackjack:table' game.code %}">Voir</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Aucune table en attente. Créez-en une !</p>
+  {% endif %}
+</div>
+
+<div class="card stack">
+  <h2>Mes dernières parties</h2>
+  {% if my_games %}
+    <div class="game-list">
+      {% for game in my_games %}
+        <div class="game-list__row">
+          <div>
+            <strong>Table {{ game.code }}</strong>
+            <span class="badge">{{ game.get_status_display }}</span>
+          </div>
+          <a class="btn btn--ghost" href="{% url 'blackjack:table' game.code %}">Voir</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Vous n'avez pas encore joué.</p>
+  {% endif %}
+</div>
+{% endblock %}

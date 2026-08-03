@@ -1,0 +1,139 @@
+/* Molecules — small groups of atoms with a single purpose. */
+
+.player-hand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 6.2rem;
+}
+
+.player-hand__cards {
+  display: flex;
+  gap: calc(var(--space-2) * -1.4);
+}
+
+.player-hand__cards .card-unit:hover {
+  transform: translateY(-6px);
+  z-index: 2;
+}
+
+.player-hand__total {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.deck-stack {
+  position: relative;
+  width: 4.4rem;
+  height: 6.2rem;
+}
+
+.deck-stack__card {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sm);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-felt-700),
+    var(--color-felt-700) 6px,
+    var(--color-gold-500) 6px,
+    var(--color-gold-500) 7px
+  );
+  border: 2px solid var(--color-gold-500);
+  box-shadow: var(--shadow-card);
+}
+
+.deck-stack__card:nth-child(1) {
+  transform: translate(0, 0);
+}
+.deck-stack__card:nth-child(2) {
+  transform: translate(2px, -2px);
+}
+.deck-stack__card:nth-child(3) {
+  transform: translate(4px, -4px);
+}
+
+.action-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}
+
+.action-zone__hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  flex-basis: 100%;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.form-field label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.form-field input,
+.form-field select {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-md);
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: 2px solid var(--color-gold-500);
+  outline-offset: 1px;
+}
+
+.form-field .errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+}
+
+.seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-medium), border-color var(--transition-medium);
+}
+
+.seat--active-turn {
+  border-color: var(--color-gold-500);
+  box-shadow: 0 0 0 3px rgba(227, 179, 65, 0.2), var(--shadow-raised);
+}
+
+.seat--you {
+  background: var(--color-surface-raised);
+}
+
+.seat__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-medium);
+}

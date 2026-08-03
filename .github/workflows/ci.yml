@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: blackjack_test
+          POSTGRES_USER: blackjack
+          POSTGRES_PASSWORD: blackjack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U blackjack -d blackjack_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: ci-secret-key
+      DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: blackjack_test
+      POSTGRES_USER: blackjack
+      POSTGRES_PASSWORD: blackjack
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint with ruff
+        run: uv run ruff check .
+
+      - name: Check formatting with black
+        run: uv run black --check .
+
+      - name: Collect static files (DEBUG=False uses manifest storage)
+        run: uv run python manage.py collectstatic --noinput
+
+      - name: Run Django test suite
+        run: uv run python manage.py test

@@ -1,9 +1,35 @@
 [project]
 name = "new-agent-air-llm"
 version = "0.1.0"
-description = "Add your description here"
+description = "Blackjack web platform built with Django, PostgreSQL and Redis"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "django>=6.0.7",
+    "gunicorn>=23.0.0",
+    "psycopg[binary]>=3.2.0",
+    "redis>=5.0.0",
+    "whitenoise>=6.7.0",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "ruff>=0.8.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["blackjack", "django_intro_config"]
