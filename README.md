@@ -1,6 +1,6 @@
 # 🃏 Blackjack — Plateforme de Jeu de Cartes Web
 
-**Auteur :** Amine Kaoutar
+**Auteurs :** Amine Kaoutar, Walid HDILOU, Joud ATALLAH
 **Jeu retenu :** Blackjack (21) — un ou plusieurs joueurs contre le croupier, dans la tradition des tables de casino.
 
 ![Table de Blackjack](docs/screenshot.png)
