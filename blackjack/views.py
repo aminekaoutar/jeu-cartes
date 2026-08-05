@@ -98,7 +98,10 @@ def game_state(request, code):
 def game_join(request, code):
     game = get_object_or_404(Game, code=code)
     form = JoinGameForm(request.POST)
-    bet = form.cleaned_data["bet"] if form.is_valid() else 10
+    if not form.is_valid():
+        messages.error(request, "Mise invalide : entrez un nombre entier d'au moins 1 jeton.")
+        return redirect("blackjack:table", code=code)
+    bet = form.cleaned_data["bet"]
     try:
         with transaction.atomic():
             game = Game.objects.select_for_update().get(pk=game.pk)

@@ -1,26 +1,66 @@
 /* Organisms — composed sections built from molecules + atoms. */
 
+/* ----------------------------------------------------------- Game table --- */
+
+/* The felt: radial lamp glow, vignette, and a stitched gold rail. */
 .game-table {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-6);
   border-radius: var(--radius-lg);
-  background: radial-gradient(ellipse at top, var(--color-felt-500), var(--color-felt-900) 70%);
-  box-shadow: var(--shadow-raised);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, var(--color-felt-500), transparent 70%),
+    radial-gradient(ellipse 120% 100% at 50% 100%, var(--color-felt-950), transparent 60%),
+    var(--color-felt-800);
+  box-shadow:
+    var(--shadow-raised),
+    inset 0 0 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 2px rgba(227, 179, 65, 0.2);
   border: 6px solid var(--color-felt-700);
+}
+
+/* Stitched inner rail, like the seam of a real casino table. */
+.game-table::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1.5px dashed var(--color-border-gold);
+  border-radius: calc(var(--radius-lg) - 6px);
+  pointer-events: none;
 }
 
 .game-table__dealer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+/* Art déco divider between the dealer's arc and the seats. */
+.game-table__dealer::after {
+  content: "◆";
+  width: 100%;
+  text-align: center;
+  color: var(--color-gold-600);
+  font-size: var(--text-xs);
+  background:
+    linear-gradient(90deg, transparent 0%, var(--color-border-gold) 20%, transparent 48%,
+      transparent 52%, var(--color-border-gold) 80%, transparent 100%)
+    center / 100% 1px no-repeat;
+}
+
+.game-table__label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-gold-300);
 }
 
 .game-table__seats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: var(--space-4);
 }
 
@@ -31,6 +71,17 @@
   flex-wrap: wrap;
   gap: var(--space-3);
 }
+
+.game-table__status h1 {
+  font-size: var(--text-xl);
+  background: linear-gradient(180deg, var(--color-gold-200), var(--color-gold-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--color-gold-400);
+}
+
+/* ----------------------------------------------------------- Scoreboard --- */
 
 .scoreboard {
   display: grid;
@@ -53,14 +104,17 @@
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   color: var(--color-gold-400);
+  font-variant-numeric: tabular-nums;
 }
 
 .scoreboard__stat-label {
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-caps);
   color: var(--color-text-muted);
 }
+
+/* ------------------------------------------------------------ Game list --- */
 
 .game-list {
   display: flex;
@@ -78,22 +132,39 @@
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
 }
 
+.game-list__row:hover {
+  border-color: var(--color-border-gold);
+  transform: translateX(4px);
+}
+
+/* --------------------------------------------------------------- Navbar --- */
+
 .navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-dock);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border-gold);
 }
 
 .navbar__brand {
   font-family: var(--font-display);
   font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
   color: var(--color-gold-400);
   text-decoration: none;
+  letter-spacing: 0.04em;
 }
 
 .navbar__links {
@@ -106,8 +177,31 @@
 .navbar__links a {
   color: var(--color-text-muted);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
 .navbar__links a:hover {
-  color: var(--color-text-primary);
+  color: var(--color-gold-300);
+}
+
+/* ----------------------------------------------------------- Responsive --- */
+
+@media (max-width: 640px) {
+  .game-table {
+    padding: var(--space-4);
+    gap: var(--space-5);
+  }
+
+  .navbar {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  /* Full-width tap targets on small screens. */
+  .action-zone .btn {
+    flex: 1 1 auto;
+  }
+
+  .toast {
+    padding: var(--space-3) var(--space-5);
+  }
 }

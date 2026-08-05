@@ -1,11 +1,12 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 
 from . import game_engine as ge
-from .models import Deck, Game, GameStatus, RoundResult, SeatStatus
+from .models import Deck, Game, GameStatus, Participation, RoundResult, SeatStatus
 
 User = get_user_model()
 
@@ -68,6 +69,23 @@ class DeckTests(TestCase):
         card = self.deck.draw()
         self.assertNotIn(card, self.deck.cards_remaining)
         self.assertEqual(len(self.deck.cards_remaining), 51)
+
+    def test_exhausted_shoe_rebuild_excludes_cards_in_play(self):
+        """Rebuilding an exhausted shoe must never reintroduce a card that is
+        currently held in a player's or the dealer's hand (no duplicates).
+        """
+        Participation.objects.create(game=self.game, player=self.host, seat=0, hand=["AS", "KD"])
+        self.game.dealer_hand = ["QH", "7C"]
+        self.game.save()
+        self.deck.cards_remaining = []
+        self.deck.discard_pile = []
+
+        drawn = [self.deck.draw() for _ in range(48)]
+
+        self.assertEqual(len(set(drawn)), 48)
+        for held in ("AS", "KD", "QH", "7C"):
+            self.assertNotIn(held, drawn)
+        self.assertEqual(self.deck.cards_remaining, [])
 
     def test_draw_reshuffles_a_fresh_shoe_once_empty(self):
         self.deck.cards_remaining = []
@@ -303,6 +321,19 @@ class ViewPermissionTests(TestCase):
 
         game.refresh_from_db()
         self.assertEqual(game.status, GameStatus.EN_ATTENTE)
+
+    def test_join_with_invalid_bet_shows_error_and_does_not_seat_player(self):
+        game = ge.create_game(self.host, max_players=2, bet=10)
+        self.client.login(username="viewguest", password="testpass123")
+
+        response = self.client.post(
+            reverse("blackjack:game_join", args=[game.code]), {"bet": "abc"}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(game.participations.filter(player=self.guest).exists())
+        rendered = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertTrue(any("mise" in m.lower() for m in rendered))
 
     def test_action_endpoint_rejects_illegal_move_as_json_400(self):
         game = ge.create_game(self.host, max_players=1, bet=10)

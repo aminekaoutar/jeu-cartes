@@ -1,0 +1,3 @@
+# Shell scripts run inside Linux containers: force LF so a Windows checkout
+# (core.autocrlf=true) cannot break the Docker entrypoint shebang.
+*.sh text eol=lf

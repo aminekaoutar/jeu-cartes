@@ -1,35 +1,59 @@
 /* Molecules — small groups of atoms with a single purpose. */
 
+/* --------------------------------------------------------- Player hand --- */
+
 .player-hand {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 6.2rem;
+  gap: var(--space-3);
+  min-height: var(--card-h);
 }
 
 .player-hand__cards {
   display: flex;
-  gap: calc(var(--space-2) * -1.4);
+  perspective: 800px;
+}
+
+.player-hand__cards .card-unit + .card-unit {
+  margin-left: var(--card-overlap);
 }
 
 .player-hand__cards .card-unit:hover {
-  transform: translateY(-6px);
+  transform: translateY(-8px) rotate(-1deg);
+  box-shadow: var(--shadow-card-lifted);
   z-index: 2;
 }
+
+/* Staggered deal for the server-rendered initial hand; JS-dealt cards
+   override this with an inline delay. */
+.player-hand__cards .card-unit--enter:nth-child(2) { animation-delay: 90ms; }
+.player-hand__cards .card-unit--enter:nth-child(3) { animation-delay: 180ms; }
+.player-hand__cards .card-unit--enter:nth-child(4) { animation-delay: 270ms; }
+.player-hand__cards .card-unit--enter:nth-child(5) { animation-delay: 360ms; }
+.player-hand__cards .card-unit--enter:nth-child(6) { animation-delay: 450ms; }
 
 .player-hand__total {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: var(--weight-bold);
   color: var(--color-text-primary);
-  min-width: 2.5rem;
-  text-align: center;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border-gold);
+  font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------------------------------- Deck stack --- */
 
 .deck-stack {
   position: relative;
-  width: 4.4rem;
-  height: 6.2rem;
+  width: var(--card-w);
+  height: var(--card-h);
 }
 
 .deck-stack__card {
@@ -37,35 +61,97 @@
   inset: 0;
   border-radius: var(--radius-sm);
   background: repeating-linear-gradient(
-    135deg,
-    var(--color-felt-700),
-    var(--color-felt-700) 6px,
-    var(--color-gold-500) 6px,
-    var(--color-gold-500) 7px
+    45deg,
+    var(--color-felt-700) 0 5px,
+    var(--color-felt-800) 5px 10px
   );
   border: 2px solid var(--color-gold-500);
   box-shadow: var(--shadow-card);
 }
 
-.deck-stack__card:nth-child(1) {
-  transform: translate(0, 0);
-}
-.deck-stack__card:nth-child(2) {
-  transform: translate(2px, -2px);
-}
-.deck-stack__card:nth-child(3) {
-  transform: translate(4px, -4px);
+.deck-stack__card:nth-child(1) { transform: translate(0, 0); }
+.deck-stack__card:nth-child(2) { transform: translate(2px, -2px); }
+.deck-stack__card:nth-child(3) { transform: translate(4px, -4px); }
+
+/* --------------------------------------------------------------- Seats --- */
+
+.seat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-medium), border-color var(--transition-medium),
+    transform var(--transition-medium);
 }
 
+/* Animated halo around the seat whose turn it is. */
+.seat--active-turn {
+  border-color: var(--color-gold-500);
+  transform: translateY(-3px);
+  animation: seat-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes seat-glow {
+  0%, 100% {
+    box-shadow: var(--glow-gold-soft), var(--shadow-raised);
+  }
+  50% {
+    box-shadow: var(--glow-gold-strong), var(--shadow-raised);
+  }
+}
+
+.seat--active-turn .seat__header strong {
+  color: var(--color-gold-300);
+}
+
+.seat--you {
+  background: linear-gradient(180deg, #1a3126, var(--color-surface-raised));
+}
+
+.seat--you::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3rem;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+}
+
+.seat__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-medium);
+}
+
+/* --------------------------------------------------------- Action zone --- */
+
+/* Floating action dock: stays reachable while the table scrolls. */
 .action-zone {
+  position: sticky;
+  bottom: var(--space-4);
+  z-index: var(--z-dock);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-gold);
+  box-shadow: var(--shadow-raised);
 }
 
 .action-zone__hint {
@@ -73,6 +159,89 @@
   color: var(--color-text-muted);
   flex-basis: 100%;
 }
+
+/* -------------------------------------------------------------- Toasts --- */
+
+.toast-stack {
+  position: fixed;
+  top: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-7);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border-gold);
+  box-shadow: var(--shadow-raised), var(--glow-gold-soft);
+  animation: toast-slam var(--duration-toast) var(--ease-spring) backwards;
+}
+
+.toast__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.toast__detail {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.toast--blackjack .toast__title,
+.toast--win .toast__title {
+  color: var(--color-gold-300);
+  text-shadow: 0 0 18px rgba(227, 179, 65, 0.55);
+}
+
+.toast--bust .toast__title,
+.toast--lose .toast__title {
+  color: var(--color-ruby-400);
+  text-shadow: 0 0 18px rgba(224, 71, 90, 0.45);
+}
+
+.toast--push .toast__title {
+  color: var(--color-info);
+}
+
+.toast--leaving {
+  animation: toast-leave 320ms ease forwards;
+}
+
+@keyframes toast-slam {
+  from {
+    transform: translateY(-18px) scale(1.25);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-leave {
+  to {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------- Forms --- */
 
 .form-field {
   display: flex;
@@ -94,12 +263,15 @@
   background: var(--color-surface);
   color: var(--color-text-primary);
   font-size: var(--text-md);
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast);
 }
 
 .form-field input:focus,
 .form-field select:focus {
   outline: 2px solid var(--color-gold-500);
   outline-offset: 1px;
+  border-color: var(--color-gold-600);
 }
 
 .form-field .errorlist {
@@ -108,32 +280,4 @@
   margin: 0;
   color: var(--color-danger);
   font-size: var(--text-xs);
-}
-
-.seat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition: box-shadow var(--transition-medium), border-color var(--transition-medium);
-}
-
-.seat--active-turn {
-  border-color: var(--color-gold-500);
-  box-shadow: 0 0 0 3px rgba(227, 179, 65, 0.2), var(--shadow-raised);
-}
-
-.seat--you {
-  background: var(--color-surface-raised);
-}
-
-.seat__header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-weight: var(--weight-medium);
 }

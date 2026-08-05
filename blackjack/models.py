@@ -84,13 +84,19 @@ class Deck(models.Model):
 
     def draw(self):
         """Pop and return one card code, reshuffling the discard pile back
-        into play automatically if the shoe runs empty.
+        into play automatically if the shoe runs empty. When both piles are
+        empty the shoe is rebuilt minus the cards currently held in hands,
+        so a card can never exist twice on the table.
         """
         if not self.cards_remaining:
-            if not self.discard_pile:
-                self.build()
-            else:
+            if self.discard_pile:
                 self.cards_remaining, self.discard_pile = self.discard_pile, []
+            else:
+                self.build()
+                in_play = set(self.game.dealer_hand)
+                for hand in self.game.participations.values_list("hand", flat=True):
+                    in_play.update(hand)
+                self.cards_remaining = [c for c in self.cards_remaining if c not in in_play]
             self.shuffle()
         return self.cards_remaining.pop()
 

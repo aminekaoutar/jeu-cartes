@@ -4,45 +4,106 @@
   const root = document.querySelector("[data-game-table]");
   if (!root) return;
 
-  const gameCode = root.dataset.gameCode;
   const actionUrl = root.dataset.actionUrl;
   const stateUrl = root.dataset.stateUrl;
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
   const POLL_INTERVAL_MS = 2500;
+  const DEAL_STAGGER_MS = 90;
+
+  // Previous hand keys per zone, so polling only animates newly dealt or
+  // freshly revealed cards instead of replaying the whole deal each time.
+  const previousHands = { dealer: null, seats: {} };
+  let yourPreviousStatus = root.dataset.yourStatus || null;
+  let resultToastShown = false;
+
+  function cardKey(card) {
+    return card.hidden ? "hidden" : card.rank + card.symbol;
+  }
+
+  function domCardKey(el) {
+    if (el.classList.contains("card-unit--hidden")) return "hidden";
+    const rank = el.querySelector(".card-unit__rank");
+    const suit = el.querySelector(".card-unit__suit");
+    return (rank ? rank.textContent : "") + (suit ? suit.textContent : "");
+  }
+
+  function seedPreviousHands() {
+    const dealerHand = root.querySelector("[data-dealer-hand]");
+    previousHands.dealer = Array.from(dealerHand.children, domCardKey);
+    root.querySelectorAll("[data-seat]").forEach((seat) => {
+      const hand = seat.querySelector("[data-hand]");
+      previousHands.seats[seat.dataset.seat] = Array.from(hand.children, domCardKey);
+    });
+  }
 
   function suitClass(color) {
     return color === "red" ? "card-unit--red" : "card-unit--black";
   }
 
-  function renderCard(card) {
+  function renderCard(card, options) {
     const el = document.createElement("div");
     if (card.hidden) {
       el.className = "card-unit card-unit--hidden";
-      return el;
+    } else {
+      el.className = `card-unit ${suitClass(card.color)}`;
+      el.innerHTML = `
+        <span class="card-unit__rank">${card.rank}</span>
+        <span class="card-unit__pip">${card.symbol}</span>
+        <span class="card-unit__suit card-unit__suit--${card.color}">${card.symbol}</span>
+      `;
     }
-    el.className = `card-unit ${suitClass(card.color)}`;
-    el.innerHTML = `
-      <span class="card-unit__rank">${card.rank}</span>
-      <span class="card-unit__suit card-unit__suit--${card.color}">${card.symbol}</span>
-    `;
+    if (options.enter) {
+      el.classList.add("card-unit--enter");
+      el.style.animationDelay = `${options.enterIndex * DEAL_STAGGER_MS}ms`;
+    }
+    if (options.flip) {
+      el.classList.add("card-unit--flip");
+    }
     return el;
   }
 
-  function renderHand(container, cards) {
+  // Re-renders a hand only when it changed; new cards slide in from the
+  // shoe, a card that was hidden and is now visible plays the flip reveal.
+  function renderHand(container, cards, prevKeys) {
+    const keys = cards.map(cardKey);
+    if (prevKeys && keys.join("|") === prevKeys.join("|")) return keys;
+
     container.innerHTML = "";
-    cards.forEach((card) => container.appendChild(renderCard(card)));
+    let entering = 0;
+    cards.forEach((card, i) => {
+      const isNew = !prevKeys || i >= prevKeys.length;
+      const wasHidden = Boolean(prevKeys) && prevKeys[i] === "hidden" && !card.hidden;
+      const el = renderCard(card, { enter: isNew, enterIndex: entering, flip: wasHidden });
+      if (isNew) entering += 1;
+      container.appendChild(el);
+    });
+    return keys;
   }
 
   function applyState(state) {
+    // Lobby phase: the waiting-room block is server-rendered, so reflect
+    // seat/status changes (someone joined, host started) with a reload.
+    if (root.dataset.status === "EN_ATTENTE") {
+      if (state.status !== "EN_ATTENTE" || String(state.players.length) !== root.dataset.players) {
+        window.location.reload();
+      }
+      return;
+    }
+
     const dealerHand = root.querySelector("[data-dealer-hand]");
-    renderHand(dealerHand, state.dealer.cards);
+    previousHands.dealer = renderHand(dealerHand, state.dealer.cards, previousHands.dealer);
     root.querySelector("[data-dealer-total]").textContent =
       state.dealer.total !== null ? state.dealer.total : "?";
 
     state.players.forEach((player) => {
       const seat = root.querySelector(`[data-seat="${player.seat}"]`);
       if (!seat) return;
-      renderHand(seat.querySelector("[data-hand]"), player.hand);
+      const key = String(player.seat);
+      previousHands.seats[key] = renderHand(
+        seat.querySelector("[data-hand]"),
+        player.hand,
+        previousHands.seats[key] || null
+      );
       seat.querySelector("[data-total]").textContent = player.total ?? "0";
       seat.classList.toggle("seat--active-turn", player.is_turn);
 
@@ -61,6 +122,8 @@
     const statusLabel = root.querySelector("[data-game-status]");
     if (statusLabel) statusLabel.textContent = state.status_label;
 
+    notifyOutcomes(state);
+
     if (state.status === "TERMINEE") {
       stopPolling();
       const banner = root.querySelector("[data-round-over]");
@@ -76,6 +139,46 @@
     if (player.is_turn) return "badge--active";
     return "";
   }
+
+  // ------------------------------------------------------------- Toasts ---
+
+  function showToast(variant, title, detail) {
+    const stack = root.querySelector("[data-toast-stack]");
+    if (!stack) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast--${variant}`;
+    toast.innerHTML = `<span class="toast__title"></span><span class="toast__detail"></span>`;
+    toast.querySelector(".toast__title").textContent = title;
+    toast.querySelector(".toast__detail").textContent = detail || "";
+    stack.appendChild(toast);
+    setTimeout(() => toast.classList.add("toast--leaving"), 3800);
+    setTimeout(() => toast.remove(), 4200);
+  }
+
+  function notifyOutcomes(state) {
+    const you = state.players.find((p) => p.is_you);
+    if (!you) return;
+
+    if (yourPreviousStatus !== "BUST" && you.status === "BUST") {
+      showToast("bust", "BUST !", `Vous dépassez 21 — mise de ${you.bet} jetons perdue.`);
+    }
+    yourPreviousStatus = you.status;
+
+    if (state.status === "TERMINEE" && !resultToastShown) {
+      resultToastShown = true;
+      if (you.result === "BLACKJACK") {
+        showToast("blackjack", "BLACKJACK !", `Paiement 3:2 sur ${you.bet} jetons.`);
+      } else if (you.result === "WIN") {
+        showToast("win", "WINNER !", `Vous remportez ${you.bet * 2} jetons.`);
+      } else if (you.result === "PUSH") {
+        showToast("push", "PUSH", `Égalité — mise de ${you.bet} jetons remboursée.`);
+      } else if (you.result === "LOSE" && you.status !== "BUST") {
+        showToast("lose", "Perdu…", "Le croupier l'emporte cette fois.");
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ Actions ---
 
   async function sendAction(action) {
     const res = await fetch(actionUrl, {
@@ -108,6 +211,8 @@
     btn.addEventListener("click", () => sendAction(btn.dataset.action));
   });
 
+  // ------------------------------------------------------------- Polling ---
+
   let pollHandle = null;
 
   async function refreshState() {
@@ -125,7 +230,8 @@
     if (pollHandle) window.clearInterval(pollHandle);
   }
 
-  if (root.dataset.status === "EN_COURS") {
+  seedPreviousHands();
+  if (root.dataset.status === "EN_COURS" || root.dataset.status === "EN_ATTENTE") {
     startPolling();
   }
 })();

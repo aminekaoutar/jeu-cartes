@@ -5,9 +5,13 @@
 <div data-game-table
      data-game-code="{{ game.code }}"
      data-status="{{ state.status }}"
+     data-players="{{ state.players|length }}"
+     data-your-status="{% for player in state.players %}{% if player.is_you %}{{ player.status }}{% endif %}{% endfor %}"
      data-action-url="{% url 'blackjack:game_action' game.code %}"
      data-state-url="{% url 'blackjack:game_state' game.code %}">
   {% csrf_token %}
+
+  <div class="toast-stack" data-toast-stack aria-live="polite"></div>
 
   <div class="game-table__status">
     <h1>Table {{ game.code }}</h1>
@@ -18,14 +22,15 @@
 
   <div class="game-table">
     <div class="game-table__dealer">
-      <span class="text-muted">Croupier</span>
+      <span class="game-table__label">Croupier</span>
       <div class="player-hand__cards" data-dealer-hand>
         {% for card in state.dealer.cards %}
           {% if card.hidden %}
-            <div class="card-unit card-unit--hidden"></div>
+            <div class="card-unit card-unit--hidden card-unit--enter"></div>
           {% else %}
-            <div class="card-unit card-unit--{{ card.color }}">
+            <div class="card-unit card-unit--{{ card.color }} card-unit--enter">
               <span class="card-unit__rank">{{ card.rank }}</span>
+              <span class="card-unit__pip">{{ card.symbol }}</span>
               <span class="card-unit__suit card-unit__suit--{{ card.color }}">{{ card.symbol }}</span>
             </div>
           {% endif %}
@@ -47,15 +52,16 @@
           <div class="player-hand">
             <div class="player-hand__cards" data-hand>
               {% for card in player.hand %}
-                <div class="card-unit card-unit--{{ card.color }}">
+                <div class="card-unit card-unit--{{ card.color }} card-unit--enter">
                   <span class="card-unit__rank">{{ card.rank }}</span>
+                  <span class="card-unit__pip">{{ card.symbol }}</span>
                   <span class="card-unit__suit card-unit__suit--{{ card.color }}">{{ card.symbol }}</span>
                 </div>
               {% endfor %}
             </div>
             <span class="player-hand__total" data-total>{{ player.total|default:"0" }}</span>
           </div>
-          <span class="chip">{{ player.bet }}</span>
+          <span class="chip chip--bet" title="Mise">{{ player.bet }}</span>
         </div>
       {% endfor %}
     </div>

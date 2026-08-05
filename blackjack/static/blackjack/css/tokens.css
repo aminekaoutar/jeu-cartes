@@ -1,37 +1,61 @@
 /*
- * Design tokens — single source of truth for colors, spacing and type.
- * Every other stylesheet in this project (atoms/molecules/organisms)
- * consumes these variables instead of hard-coded values.
+ * Design tokens — single source of truth for the casino design system.
+ * Every other stylesheet (atoms/molecules/organisms) consumes these
+ * variables instead of hard-coded values.
+ *
+ * Ambiance: "Casino Art Déco nocturne" — deep emerald felt, champagne
+ * gilding, ivory cards, ruby accents.
  */
 
 :root {
   /* --- Suit colors --- */
-  --suit-hearts: #e0475a;
-  --suit-diamonds: #e0475a;
-  --suit-clubs: #1c1c1e;
-  --suit-spades: #1c1c1e;
+  --suit-hearts: #c22b3d;
+  --suit-diamonds: #c22b3d;
+  --suit-clubs: #1a1713;
+  --suit-spades: #1a1713;
 
-  /* --- Table / brand palette --- */
+  /* --- Felt (table greens, dark to light) --- */
+  --color-felt-950: #03150e;
   --color-felt-900: #06281c;
+  --color-felt-800: #0a3a28;
   --color-felt-700: #0d4b34;
+  --color-felt-600: #115a3e;
   --color-felt-500: #146b49;
-  --color-gold-500: #e3b341;
+
+  /* --- Gilding (champagne golds) --- */
+  --color-gold-200: #f9ecc0;
+  --color-gold-300: #f4d98d;
   --color-gold-400: #f0cd6b;
+  --color-gold-500: #e3b341;
+  --color-gold-600: #b98a25;
+  --color-gold-700: #8a6418;
 
-  --color-surface: #12201b;
-  --color-surface-raised: #1a2f27;
-  --color-surface-card: #fbf7ee;
+  /* --- Ruby (danger / hearts accents) --- */
+  --color-ruby-400: #ff5d72;
+  --color-ruby-500: #e0475a;
+  --color-ruby-600: #b32e40;
 
+  /* --- Surfaces --- */
+  --color-surface: #0e1d17;
+  --color-surface-raised: #16291f;
+  --color-surface-overlay: rgba(6, 18, 13, 0.82);
+  --color-surface-card: #fdf9ee;
+  --color-surface-card-edge: #efe6cd;
+
+  /* --- Text --- */
   --color-text-primary: #f4f1e8;
   --color-text-muted: #a9b7ae;
-  --color-text-on-card: #1c1c1e;
+  --color-text-on-card: #1a1713;
+  --color-text-on-gold: #241a06;
 
+  /* --- Semantic --- */
   --color-success: #3fb27f;
-  --color-danger: #e0475a;
-  --color-warning: #e3b341;
+  --color-danger: var(--color-ruby-500);
+  --color-warning: var(--color-gold-500);
   --color-info: #4d9de0;
 
   --color-border: rgba(244, 241, 232, 0.14);
+  --color-border-gold: rgba(227, 179, 65, 0.45);
 
   /* --- Spacing scale (4px base) --- */
   --space-1: 0.25rem;
@@ -44,29 +68,53 @@
   --space-8: 4rem;
 
   /* --- Typography --- */
-  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-display: "Georgia", "Iowan Old Style", serif;
+  --font-display: "Fraunces", "Georgia", "Iowan Old Style", serif;
+  --font-body: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
   --text-lg: 1.25rem;
-  --text-xl: 1.75rem;
-  --text-2xl: 2.5rem;
+  --text-xl: clamp(1.4rem, 3.5vw, 1.75rem);
+  --text-2xl: clamp(1.8rem, 5vw, 2.5rem);
+  --text-hero: clamp(2.2rem, 7vw, 3.4rem);
 
   --weight-regular: 400;
   --weight-medium: 600;
   --weight-bold: 700;
 
-  /* --- Radii / shadows / motion --- */
+  --tracking-caps: 0.08em;
+
+  /* --- Card geometry (responsive) --- */
+  --card-w: clamp(3.6rem, 9vw, 4.6rem);
+  --card-h: calc(var(--card-w) * 1.4);
+  --card-overlap: calc(var(--card-w) * -0.32);
+
+  /* --- Poker chip geometry --- */
+  --chip-disc: 1.5em;
+
+  /* --- Radii --- */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-pill: 999px;
 
-  --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.35);
+  /* --- Shadows & glows --- */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 14px rgba(0, 0, 0, 0.35);
+  --shadow-card-lifted: 0 4px 8px rgba(0, 0, 0, 0.4), 0 14px 28px rgba(0, 0, 0, 0.45);
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --glow-gold-soft: 0 0 0 2px rgba(227, 179, 65, 0.25), 0 0 16px 2px rgba(227, 179, 65, 0.18);
+  --glow-gold-strong: 0 0 0 3px rgba(227, 179, 65, 0.45), 0 0 28px 6px rgba(227, 179, 65, 0.3);
 
+  /* --- Motion --- */
   --transition-fast: 140ms ease;
   --transition-medium: 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-deal: 420ms;
+  --duration-flip: 640ms;
+  --duration-toast: 460ms;
+
+  /* --- Layers --- */
+  --z-dock: 40;
+  --z-toast: 60;
 }

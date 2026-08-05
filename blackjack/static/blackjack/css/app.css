@@ -14,9 +14,19 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--color-felt-900);
+  /* Nocturnal casino room: a warm lamp glow over deep emerald darkness. */
+  background:
+    radial-gradient(60rem 30rem at 50% -8%, rgba(20, 107, 73, 0.5), transparent 70%),
+    radial-gradient(70rem 40rem at 50% 115%, rgba(3, 21, 14, 0.9), transparent 65%),
+    var(--color-felt-950);
+  background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-gold-500);
+  color: var(--color-text-on-gold);
 }
 
 main {
@@ -30,11 +40,19 @@ main {
 
 h1, h2, h3 {
   font-family: var(--font-display);
+  font-weight: var(--weight-medium);
   margin: 0;
 }
 
 a {
   color: var(--color-gold-400);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-gold-400);
+  outline-offset: 2px;
 }
 
 .messages {
@@ -83,4 +101,15 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Respect users who prefer static interfaces. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

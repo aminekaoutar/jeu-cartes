@@ -16,3 +16,8 @@ staticfiles/
 
 # Environment variables
 .env
+
+# Local tooling & workspace temporaries (never commit)
+.claude/
+*.claude*
+.playwright-mcp/
