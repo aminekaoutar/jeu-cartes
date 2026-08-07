@@ -445,3 +445,42 @@ class DoubleDownPayoutTests(TestCase):
         self.assertEqual(self.participation.result, RoundResult.WIN)
         # 1000 - 100 (join) - 100 (double) + 400 (2x200 payout) = 1200.
         self.assertEqual(self.host.profile.chips, 1200)
+
+
+# ---------------------------------------------------------------------------
+# Engine: dealer drawing rule (house hits a soft 17)
+# ---------------------------------------------------------------------------
+
+
+class DealerDrawRuleTests(TestCase):
+    def setUp(self):
+        self.host = make_user("dealerrule", chips=1000)
+        self.game = ge.create_game(self.host, max_players=1, bet=100)
+        Deck.objects.create(game=self.game)
+        self.participation = self.game.participations.get(player=self.host)
+
+    def _stand_on(self, player_hand, dealer_hand, next_cards):
+        self.participation.hand = player_hand
+        self.participation.status = SeatStatus.PLAYING
+        self.participation.save()
+        self.game.dealer_hand = dealer_hand
+        self.game.status = GameStatus.EN_COURS
+        self.game.current_turn_seat = self.participation.seat
+        self.game.save()
+        deck = self.game.deck
+        deck.cards_remaining = list(reversed(next_cards))  # pop() draws left-to-right
+        deck.save()
+        ge.player_stand(self.game, self.host)
+        self.game.refresh_from_db()
+
+    def test_dealer_hits_a_soft_seventeen(self):
+        # Dealer AH+6H = soft 17: the house rule requires another card.
+        self._stand_on(["10S", "8S"], ["AH", "6H"], next_cards=["2C"])
+        self.assertGreater(len(self.game.dealer_hand), 2)
+        self.assertGreaterEqual(ge.hand_value(self.game.dealer_hand), 17)
+        self.assertTrue(self.game.dealer_revealed)
+
+    def test_dealer_stands_on_a_hard_seventeen(self):
+        # Dealer 10H+7H = hard 17: the dealer must not draw.
+        self._stand_on(["10S", "8S"], ["10H", "7H"], next_cards=["2C"])
+        self.assertEqual(len(self.game.dealer_hand), 2)
