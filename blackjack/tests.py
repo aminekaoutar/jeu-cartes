@@ -484,3 +484,56 @@ class DealerDrawRuleTests(TestCase):
         # Dealer 10H+7H = hard 17: the dealer must not draw.
         self._stand_on(["10S", "8S"], ["10H", "7H"], next_cards=["2C"])
         self.assertEqual(len(self.game.dealer_hand), 2)
+
+
+# ---------------------------------------------------------------------------
+# Engine: multi-seat turn flow (existing round tests are single-player only)
+# ---------------------------------------------------------------------------
+
+
+class MultiSeatTurnTests(TestCase):
+    def setUp(self):
+        self.host = make_user("seat0", chips=1000)
+        self.guest = make_user("seat1", chips=1000)
+        self.game = ge.create_game(self.host, max_players=2, bet=100)
+        ge.join_game(self.game, self.guest, bet=100)
+        Deck.objects.create(game=self.game, cards_remaining=["2C", "3C", "4C", "5C"])
+        self.p0 = self.game.participations.get(player=self.host)
+        self.p1 = self.game.participations.get(player=self.guest)
+
+    def _mid_round(self):
+        for p in (self.p0, self.p1):
+            p.hand = ["10S", "7S"]  # 17, harmless standing hand
+            p.status = SeatStatus.PLAYING
+            p.result = RoundResult.PENDING
+            p.save()
+        self.game.dealer_hand = ["10H", "9H"]  # 19, stands
+        self.game.status = GameStatus.EN_COURS
+        self.game.current_turn_seat = 0
+        self.game.save()
+
+    def test_turn_advances_to_the_next_seat_before_settling(self):
+        self._mid_round()
+        ge.player_stand(self.game, self.host)  # seat 0 acts
+
+        self.game.refresh_from_db()
+        self.assertEqual(self.game.current_turn_seat, 1)
+        self.assertEqual(self.game.status, GameStatus.EN_COURS)
+
+        ge.player_stand(self.game, self.guest)  # last seat acts -> settle
+        self.game.refresh_from_db()
+        self.assertEqual(self.game.status, GameStatus.TERMINEE)
+
+    def test_leaving_on_your_turn_marks_seat_left_and_passes_play(self):
+        self._mid_round()
+        ge.leave_game(self.game, self.host)  # seat 0 leaves mid-round
+
+        self.p0.refresh_from_db()
+        self.game.refresh_from_db()
+        self.assertEqual(self.p0.status, SeatStatus.LEFT)
+        self.assertEqual(self.game.current_turn_seat, 1)
+        self.assertEqual(self.game.status, GameStatus.EN_COURS)
+
+    def test_joining_the_same_table_twice_is_rejected(self):
+        with self.assertRaises(ge.IllegalMoveError):
+            ge.join_game(self.game, self.host, bet=100)
