@@ -1,4 +1,5 @@
 import json
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -16,6 +17,20 @@ def make_user(username, chips=1000):
     user.profile.chips = chips
     user.profile.save()
     return user
+
+
+def stacked_shoe(draw_order):
+    """Patch Deck.shuffle so a game deals cards in a known sequence.
+
+    Deck.draw() pops from the end of cards_remaining, so the shoe is stored
+    reversed: the first code in `draw_order` is the first one dealt. This lets
+    start_game() produce fully deterministic hands without touching the engine.
+    """
+
+    def fake_shuffle(self):
+        self.cards_remaining = list(reversed(draw_order))
+
+    return mock.patch.object(Deck, "shuffle", fake_shuffle)
 
 
 # ---------------------------------------------------------------------------
@@ -360,3 +375,73 @@ class ViewPermissionTests(TestCase):
         self.client.login(username="viewhost", password="testpass123")
         response = self.client.get(reverse("blackjack:table", args=["NOTAREAL"]))
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Engine: payout math on natural blackjacks (settled through start_game with a
+# stacked shoe, so the 3:2 / push branches run end-to-end, not in isolation)
+# ---------------------------------------------------------------------------
+
+
+class BlackjackPayoutTests(TestCase):
+    def setUp(self):
+        self.host = make_user("bjhost", chips=1000)
+
+    def test_natural_blackjack_pays_three_to_two(self):
+        game = ge.create_game(self.host, max_players=1, bet=100)
+        # Deal order: player, dealer, player, dealer.
+        # Player AS+KH = 21 (natural); dealer 9D+8C = 17 (stands, no draw).
+        with stacked_shoe(["AS", "9D", "KH", "8C"]):
+            ge.start_game(game, self.host)
+
+        participation = game.participations.get(player=self.host)
+        self.host.profile.refresh_from_db()
+        self.assertEqual(participation.result, RoundResult.BLACKJACK)
+        # bet 100 returned + 150 winnings (3:2) => 1000 - 100 + 250 = 1150.
+        self.assertEqual(self.host.profile.chips, 1150)
+        self.assertEqual(self.host.profile.games_won, 1)
+
+    def test_blackjack_against_dealer_blackjack_is_a_push(self):
+        game = ge.create_game(self.host, max_players=1, bet=100)
+        # Both sides draw a natural: player AS+KH, dealer AD+KC.
+        with stacked_shoe(["AS", "AD", "KH", "KC"]):
+            ge.start_game(game, self.host)
+
+        participation = game.participations.get(player=self.host)
+        self.host.profile.refresh_from_db()
+        self.assertEqual(participation.result, RoundResult.PUSH)
+        self.assertEqual(self.host.profile.chips, 1000)  # bet fully refunded
+        self.assertEqual(self.host.profile.games_pushed, 1)
+
+
+class DoubleDownPayoutTests(TestCase):
+    """The winning double-down path (existing tests only cover the rejection
+    when it is not the first action)."""
+
+    def setUp(self):
+        self.host = make_user("doubler", chips=1000)
+        self.game = ge.create_game(self.host, max_players=1, bet=100)
+        Deck.objects.create(game=self.game)
+        self.participation = self.game.participations.get(player=self.host)
+
+    def test_winning_double_stakes_and_pays_double(self):
+        self.participation.hand = ["5S", "6S"]  # 11, ideal to double
+        self.participation.status = SeatStatus.PLAYING
+        self.participation.save()
+        self.game.dealer_hand = ["10H", "7H"]  # hard 17, dealer stands
+        self.game.status = GameStatus.EN_COURS
+        self.game.current_turn_seat = self.participation.seat
+        self.game.save()
+
+        deck = self.game.deck
+        deck.cards_remaining = ["KD"]  # the double draw: 11 + 10 => 21
+        deck.save()
+
+        ge.player_double(self.game, self.host)
+
+        self.participation.refresh_from_db()
+        self.host.profile.refresh_from_db()
+        self.assertEqual(self.participation.bet, 200)  # stake doubled
+        self.assertEqual(self.participation.result, RoundResult.WIN)
+        # 1000 - 100 (join) - 100 (double) + 400 (2x200 payout) = 1200.
+        self.assertEqual(self.host.profile.chips, 1200)
